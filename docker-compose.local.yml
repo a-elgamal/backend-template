@@ -11,7 +11,7 @@ services:
     environment:
       DB_URL: "postgres://postgres:postgres@postgres/myservice?sslmode=disable"
   postgres:
-    image: postgres:15
+    image: postgres:18
     ports:
       - "5432:5432"
     environment:
