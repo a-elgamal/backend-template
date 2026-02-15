@@ -11,6 +11,8 @@ A production-ready backend service template with a Flutter admin portal. Support
 
 ## Quick Start
 
+> **First time?** Run `make setup` to customize this template for your project.
+
 ```shell
 # Start local Postgres
 docker-compose -f docker-compose.local.yml up -d postgres

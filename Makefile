@@ -84,6 +84,10 @@ run: build
 run: ;$(info $(M) running…) ## Runing the service
 	$Q bin/myservice start
 
+.PHONY: setup
+setup: ; $(info $(M) running setup wizard…) @ ## Run the initial setup wizard
+	@bash setup.sh
+
 # Misc
 
 .PHONY: clean
