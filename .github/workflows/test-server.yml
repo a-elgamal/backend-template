@@ -12,6 +12,11 @@ env:
   test_badge_message: none executed
   GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
 
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
 jobs:
   static-analysis:
     runs-on: ubuntu-latest
