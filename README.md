@@ -67,7 +67,17 @@ The template includes a sample `app` entity in `internal/app/` demonstrating CRU
 4. Register routes in `cmd/start.go` (similar to how `app.SetupRoutes` is called)
 5. Add a database migration in `internal/db/migrations/`
 
-### 4. Configure deployment
+### 4. Enable CI/CD workflows
+
+The template ships with CI/CD workflows that are safe to run out of the box. Test workflows (`test-server.yml`, `test-portal.yml`, `test-integration.yml`) run on every push — badge updates are skipped unless the `GIST_TOKEN` secret is configured.
+
+Publish and deploy workflows are set to `workflow_dispatch` only (manual trigger) so they don't fail without cloud credentials. To enable them:
+
+1. **Publish workflows** (`publish.yml`, `publish-aws.yml`): Uncomment the `push` trigger and `paths-ignore` block
+2. **Deploy workflows** (`deploy-dev.yml`, `deploy-repo.yml`, `deploy-aws-dev.yml`): Uncomment the `push` and/or `workflow_run` triggers
+3. Configure the required repository variables and secrets (see [GitHub Actions Setup](#github-actions-setup))
+
+### 5. Configure deployment
 
 Search for `TODO` comments across the Terraform and workflow files for values that need customization (project IDs, domains, VPC references, etc.).
 
@@ -213,7 +223,7 @@ Infrastructure is defined in `terraform/modules/myservice/`:
 - **Registry**: Artifact Registry (configured in `terraform/repo/`)
 - **Telemetry**: Exported to Google Cloud via the `googlecloud` OTLP exporter
 
-CI/CD:
+CI/CD (manual trigger by default — see [Enable CI/CD workflows](#4-enable-cicd-workflows)):
 - `publish.yml` — Builds and pushes to Artifact Registry
 - `deploy.yml` — Reusable Terraform plan/apply workflow
 - `deploy-dev.yml` — Deploys dev on publish completion
@@ -228,7 +238,7 @@ Infrastructure is defined in `terraform/modules/myservice-aws/`:
 - **Registry**: ECR (configured in `terraform/aws-repo/`)
 - **Telemetry**: Exported to CloudWatch/X-Ray via `awsemf`/`awsxray` OTLP exporters
 
-CI/CD:
+CI/CD (manual trigger by default — see [Enable CI/CD workflows](#4-enable-cicd-workflows)):
 - `publish-aws.yml` — Builds and pushes to ECR
 - `deploy-aws.yml` — Reusable Terraform plan/apply workflow
 - `deploy-aws-dev.yml` — Deploys dev on publish completion
@@ -244,6 +254,8 @@ Both cloud providers authenticate via GitHub OIDC (no long-lived secrets):
 **AWS** — Set these repository variables:
 - `AWS_DEPLOY_ROLE_ARN`, `AWS_REGION`
 - `TERRAFORM_VERSION`
+
+**Badges** (optional) — Set the `GIST_TOKEN` secret to a personal access token with `gist` scope to enable test/coverage badge updates.
 
 ## Portal Development
 
