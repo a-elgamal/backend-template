@@ -18,6 +18,26 @@ import (
 
 var tracer = otel.Tracer("myservice/google")
 
+// AuthProvider implements auth.Provider for GCP IAP authentication
+type AuthProvider struct {
+	conf config.GCPConfig
+}
+
+// NewAuthProvider creates a new GCP IAP auth provider
+func NewAuthProvider(conf config.GCPConfig) *AuthProvider {
+	return &AuthProvider{conf: conf}
+}
+
+// Middleware returns a Gin middleware that validates GCP IAP signed headers
+func (p *AuthProvider) Middleware(logger logr.Logger) gin.HandlerFunc {
+	return authMiddleware(logger, p.conf.ProjectNumber(), p.conf.Region(), p.conf.InternalBackendServiceID())
+}
+
+// IsEnabled reports whether IAP authentication is configured
+func (p *AuthProvider) IsEnabled() bool {
+	return p.conf.IAPAuthEnabled()
+}
+
 // AuthMiddleware Returns an Gin Authentication middleware that authenticates requests by checking IAP signed authentication headers. Upon successful authentication, the Gin context is set with the user's id & email
 func AuthMiddleware(logger logr.Logger, conf config.GCPConfig) gin.HandlerFunc {
 	return authMiddleware(logger, conf.ProjectNumber(), conf.Region(), conf.InternalBackendServiceID())
