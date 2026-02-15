@@ -1,3 +1,3 @@
-DROP TRIGGER IF EXISTS item_update_modified_at ON item;
+DROP TRIGGER IF EXISTS app_update_modified_at ON app;
 DROP FUNCTION IF EXISTS update_modified_at();
-DROP TABLE IF EXISTS item;
+DROP TABLE IF EXISTS app;

@@ -1,4 +1,4 @@
-CREATE TABLE item (
+CREATE TABLE app (
     id VARCHAR(36) NOT NULL PRIMARY KEY CHECK(length(id) > 0),
     content JSONB NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -7,7 +7,7 @@ CREATE TABLE item (
     modified_by VARCHAR(50) NOT NULL CHECK(length(modified_by) > 0)
 );
 
-CREATE INDEX item_content_idx ON item USING GIN(content jsonb_path_ops);
+CREATE INDEX app_content_idx ON app USING GIN(content jsonb_path_ops);
 
 CREATE OR REPLACE FUNCTION update_modified_at()
 RETURNS TRIGGER AS $$
@@ -17,7 +17,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER item_update_modified_at
-    BEFORE UPDATE ON item
+CREATE TRIGGER app_update_modified_at
+    BEFORE UPDATE ON app
     FOR EACH ROW
     EXECUTE PROCEDURE update_modified_at();

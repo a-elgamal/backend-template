@@ -16,7 +16,7 @@ import (
 	internalDB "alielgamal.com/myservice/internal/db"
 	"alielgamal.com/myservice/internal/google"
 	"alielgamal.com/myservice/internal/health"
-	"alielgamal.com/myservice/internal/item"
+	"alielgamal.com/myservice/internal/app"
 	"alielgamal.com/myservice/internal/telemetry"
 )
 
@@ -62,7 +62,7 @@ func startCmd(logger logr.Logger, db *internalDB.SQLDB, appConfig config.Config)
 				internalRouter.Use(google.AuthMiddleware(logger, appConfig.GCPConfig))
 			}
 			health.SetupRoutes(internalRouter, db, dbVersion)
-			item.SetupRoutes(internalRouter, logger, db)
+			app.SetupRoutes(internalRouter, logger, db)
 			internalRouter.Static("portal", appConfig.ServerConfig.PortalPath())
 
 			externalRouter := router.Group("/external")
