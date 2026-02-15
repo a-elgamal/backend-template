@@ -1,0 +1,119 @@
+name: Deploy AWS
+
+on:
+  workflow_call:
+    inputs:
+      env:
+        type: string
+        description: The name of the environment to deploy
+        required: true
+      image_tag:
+        type: string
+        description: The image tag to deploy
+        required: false
+
+concurrency: deploy-aws-${{inputs.env}}
+
+jobs:
+  plan:
+    permissions:
+      id-token: 'write'
+      contents: read
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            terraform
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+          terraform_version: ${{ vars.TERRAFORM_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Fetch Image Digest
+        id: fetch-digest
+        if: ${{ inputs.image_tag != null }}
+        run: |
+          echo 'digest<<EOF' >> $GITHUB_OUTPUT
+          DIGEST=$(aws ecr describe-images --repository-name myservice --image-ids imageTag=${{ inputs.image_tag }} --query 'imageDetails[0].imageDigest' --output text)
+          REGISTRY=$(aws ecr describe-repositories --repository-names myservice --query 'repositories[0].repositoryUri' --output text)
+          echo "-var=\"docker_image=${REGISTRY}@${DIGEST}\"" >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
+
+      - name: Terraform Init
+        id: init
+        working-directory: terraform/aws-${{ inputs.env }}
+        shell: bash
+        run: |
+          terraform init
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: terraform/aws-${{ inputs.env }}
+        shell: bash
+        run: |
+          terraform plan ${{ steps.fetch-digest.outputs.digest }} -out=tfplan
+
+      - name: Upload Plan
+        id: upload-plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-aws
+          path: terraform/aws-${{ inputs.env }}/tfplan
+
+  apply:
+    needs: plan
+    environment: aws-${{ inputs.env }}
+    permissions:
+      id-token: 'write'
+      contents: read
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            terraform
+
+      - name: Download Plan
+        id: download-plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-aws
+          path: terraform/aws-${{ inputs.env }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+          terraform_version: ${{ vars.TERRAFORM_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Terraform Init
+        id: init
+        working-directory: terraform/aws-${{ inputs.env }}
+        shell: bash
+        run: |
+          terraform init
+
+      - name: Terraform Apply
+        id: apply
+        working-directory: terraform/aws-${{ inputs.env }}
+        shell: bash
+        run: |
+          terraform apply -input=false tfplan

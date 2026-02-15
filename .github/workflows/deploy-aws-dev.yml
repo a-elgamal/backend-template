@@ -1,0 +1,22 @@
+name: Deploy AWS Dev Environment
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - terraform/aws-dev/**
+      - terraform/modules/myservice-aws/**
+  workflow_run:
+    workflows: [Publish AWS]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event.workflow_run == null}}
+    uses: ./.github/workflows/deploy-aws.yml
+    with:
+      env: dev
+      image_tag: latest
