@@ -6,59 +6,66 @@ part of 'routes.dart';
 // GoRouterGenerator
 // **************************************************************************
 
-List<RouteBase> get $appRoutes => [
-      $appListViewRoute,
-    ];
+List<RouteBase> get $appRoutes => [$appListViewRoute];
 
 RouteBase get $appListViewRoute => GoRouteData.$route(
-      path: '/apps',
-      name: 'appListView',
-      factory: $AppListViewRouteExtension._fromState,
-      routes: [
-        GoRouteData.$route(
-          path: ':appName',
-          name: 'appView',
-          factory: $AppViewRouteExtension._fromState,
-        ),
-      ],
-    );
+  path: '/apps',
+  name: 'appListView',
+  factory: $AppListViewRoute._fromState,
+  routes: [
+    GoRouteData.$route(
+      path: ':appName',
+      name: 'appView',
+      factory: $AppViewRoute._fromState,
+    ),
+  ],
+);
 
-extension $AppListViewRouteExtension on AppListViewRoute {
+mixin $AppListViewRoute on GoRouteData {
   static AppListViewRoute _fromState(GoRouterState state) =>
       const AppListViewRoute();
 
-  String get location => GoRouteData.$location(
-        '/apps',
-      );
+  @override
+  String get location => GoRouteData.$location('/apps');
 
+  @override
   void go(BuildContext context) => context.go(location);
 
+  @override
   Future<T?> push<T>(BuildContext context) => context.push<T>(location);
 
+  @override
   void pushReplacement(BuildContext context) =>
       context.pushReplacement(location);
 
+  @override
   void replace(BuildContext context) => context.replace(location);
 }
 
-extension $AppViewRouteExtension on AppViewRoute {
+mixin $AppViewRoute on GoRouteData {
   static AppViewRoute _fromState(GoRouterState state) => AppViewRoute(
-        state.pathParameters['appName']!,
-        state.extra as Stored<App>?,
-      );
+    state.pathParameters['appName']!,
+    state.extra as Stored<App>?,
+  );
 
-  String get location => GoRouteData.$location(
-        '/apps/${Uri.encodeComponent(appName)}',
-      );
+  AppViewRoute get _self => this as AppViewRoute;
 
-  void go(BuildContext context) => context.go(location, extra: $extra);
+  @override
+  String get location =>
+      GoRouteData.$location('/apps/${Uri.encodeComponent(_self.appName)}');
 
+  @override
+  void go(BuildContext context) => context.go(location, extra: _self.$extra);
+
+  @override
   Future<T?> push<T>(BuildContext context) =>
-      context.push<T>(location, extra: $extra);
+      context.push<T>(location, extra: _self.$extra);
 
+  @override
   void pushReplacement(BuildContext context) =>
-      context.pushReplacement(location, extra: $extra);
+      context.pushReplacement(location, extra: _self.$extra);
 
+  @override
   void replace(BuildContext context) =>
-      context.replace(location, extra: $extra);
+      context.replace(location, extra: _self.$extra);
 }

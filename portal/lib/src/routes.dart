@@ -21,17 +21,17 @@ part 'routes.g.dart';
     )
   ],
 )
-class AppListViewRoute extends GoRouteData {
+class AppListViewRoute extends GoRouteData with $AppListViewRoute {
   const AppListViewRoute();
 
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       Consumer<AppService>(
-        builder: (_, s, __) => AppListView(s),
+        builder: (_, s, _) => AppListView(s),
       );
 }
 
-class AppViewRoute extends GoRouteData {
+class AppViewRoute extends GoRouteData with $AppViewRoute {
   final String appName;
   final Stored<App>? $extra;
 
@@ -40,7 +40,7 @@ class AppViewRoute extends GoRouteData {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       Consumer<AppService>(
-        builder: (_, s, __) => AppView(
+        builder: (_, s, _) => AppView(
           s,
           appName,
           app: $extra,

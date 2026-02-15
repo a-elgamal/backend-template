@@ -6,7 +6,7 @@ import 'package:portal/src/apps/app.dart';
 import 'package:portal/src/stored/stored.dart';
 
 class AppService {
-  static final relativePathSegments = [...kBackendSegments, "apps"];
+  static final List<String> relativePathSegments = [...kBackendSegments, "apps"];
 
   final http.Client client;
 

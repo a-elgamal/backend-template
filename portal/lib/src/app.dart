@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
           ),
           dispose: (_, client) => client.close(),
         ),
-        ProxyProvider<Client, AppService>(update: (_, c, __) => AppService(c)),
+        ProxyProvider<Client, AppService>(update: (_, c, _) => AppService(c)),
       ],
       child: MaterialApp.router(
         // Providing a restorationScopeId allows the Navigator built by the

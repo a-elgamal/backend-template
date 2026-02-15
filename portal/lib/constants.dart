@@ -10,7 +10,7 @@ const kBackendPort =
 const kBackendPath =
     String.fromEnvironment("portal_backend_path", defaultValue: "/internal");
 
-final kBackendSegments = () {
+final List<String> kBackendSegments = () {
   final matches = RegExp(r"(?:\/)?([^\/]+)").allMatches(kBackendPath);
   List<String> result = [];
   for (final m in matches) {
