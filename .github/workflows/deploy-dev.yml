@@ -1,17 +1,18 @@
+# To enable: uncomment the push and workflow_run triggers below
 name: Deploy Dev Environment
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - terraform/dev/**
-      - terraform/modules/**
-  workflow_run:
-    workflows: [Publish]
-    types: [completed]
-    branches: [main]
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - terraform/dev/**
+  #     - terraform/modules/**
+  # workflow_run:
+  #   workflows: [Publish]
+  #   types: [completed]
+  #   branches: [main]
 
 jobs:
   deploy:

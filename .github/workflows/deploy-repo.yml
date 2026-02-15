@@ -1,12 +1,13 @@
+# To enable: uncomment the push trigger below
 name: Deploy Repo Environment
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - terraform/repo/**
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - terraform/repo/**
 
 jobs:
   deploy:

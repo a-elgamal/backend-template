@@ -1,16 +1,18 @@
+# To enable: change trigger from workflow_dispatch to push (see paths-ignore below)
 name: Publish AWS
 run-name: Publishing Docker Image to AWS ECR
 
 on:
-  push:
-    paths-ignore:
-      - 'terraform/**'
-      - '.github/**'
-      - '!.github/workflows/publish-aws.yml'
-      - '.gitignore'
-      - 'README.md'
-      - '.vscode/**'
-      - '*_test.go'
+  workflow_dispatch:
+  # push:
+  #   paths-ignore:
+  #     - 'terraform/**'
+  #     - '.github/**'
+  #     - '!.github/workflows/publish-aws.yml'
+  #     - '.gitignore'
+  #     - 'README.md'
+  #     - '.vscode/**'
+  #     - '*_test.go'
 
 env:
   ECR_REPOSITORY: myservice
