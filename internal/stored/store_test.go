@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"alielgamal.com/myservice/internal/config"
 	testDB "alielgamal.com/myservice/internal/db/test"
 )

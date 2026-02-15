@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
+
 	"alielgamal.com/myservice/internal/config"
 	internalDB "alielgamal.com/myservice/internal/db"
 )

@@ -9,12 +9,13 @@ import (
 
 	"contrib.go.opencensus.io/integrations/ocsql"
 	"github.com/lib/pq"
-	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 
 	"github.com/XSAM/otelsql"
 	// Postgres driver import
 	_ "github.com/jackc/pgx/v5"
 	"github.com/spf13/cobra"
+
 	"alielgamal.com/myservice/internal/config"
 	internalDB "alielgamal.com/myservice/internal/db"
 	"alielgamal.com/myservice/internal/telemetry"

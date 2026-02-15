@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+
 	"alielgamal.com/myservice/cmd"
 	"alielgamal.com/myservice/internal/config"
 	"alielgamal.com/myservice/internal/db"

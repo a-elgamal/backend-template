@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/mock"
+
 	"alielgamal.com/myservice/internal/db"
 )
 

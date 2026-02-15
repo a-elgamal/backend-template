@@ -9,7 +9,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
-	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
 
 // Middleware returns middleware that will trace incoming requests.
@@ -32,7 +32,7 @@ func Middleware(logger logr.Logger) gin.HandlerFunc {
 		ginCtx.Request = ginCtx.Request.WithContext(ctx)
 
 		attrs := []attribute.KeyValue{
-			semconv.HTTPMethodKey.String(ginCtx.Request.Method),
+			semconv.HTTPRequestMethodKey.String(ginCtx.Request.Method),
 		}
 
 		route := ginCtx.FullPath()
@@ -45,8 +45,7 @@ func Middleware(logger logr.Logger) gin.HandlerFunc {
 
 		defer func() {
 
-			resAttributes := semconv.HTTPAttributesFromHTTPStatusCode(ginCtx.Writer.Status())
-			resAttributes = append(resAttributes, attrs...)
+			resAttributes := append(attrs, semconv.HTTPResponseStatusCodeKey.Int(ginCtx.Writer.Status()))
 
 			attemptsCounter.Add(ctx, 1, metric.WithAttributes(resAttributes...))
 

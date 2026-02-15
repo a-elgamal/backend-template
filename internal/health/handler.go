@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+
 	"alielgamal.com/myservice/internal"
 	"alielgamal.com/myservice/internal/db"
 )

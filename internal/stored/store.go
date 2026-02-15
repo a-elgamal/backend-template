@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel"
+
 	internalDB "alielgamal.com/myservice/internal/db"
 )
 

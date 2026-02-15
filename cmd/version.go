@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+
 	"alielgamal.com/myservice/internal"
 	internalDB "alielgamal.com/myservice/internal/db"
 )

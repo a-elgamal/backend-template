@@ -11,12 +11,13 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/spf13/cobra"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
-	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+
+	"alielgamal.com/myservice/internal/app"
 	"alielgamal.com/myservice/internal/config"
 	internalDB "alielgamal.com/myservice/internal/db"
 	"alielgamal.com/myservice/internal/google"
 	"alielgamal.com/myservice/internal/health"
-	"alielgamal.com/myservice/internal/app"
 	"alielgamal.com/myservice/internal/telemetry"
 )
 
@@ -40,10 +41,9 @@ func startCmd(logger logr.Logger, db *internalDB.SQLDB, appConfig config.Config)
 			if err != nil {
 				logger.Error(err, "failed to set up OpenTelemetry monitoring")
 			}
-			err = otelsql.RegisterDBStatsMetrics(db.DB, otelsql.WithAttributes(
+			if _, err = otelsql.RegisterDBStatsMetrics(db.DB, otelsql.WithAttributes(
 				semconv.DBSystemPostgreSQL,
-			))
-			if err != nil {
+			)); err != nil {
 				logger.Error(err, "failed to register otelsql metrics")
 			}
 
