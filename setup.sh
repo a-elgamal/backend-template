@@ -98,6 +98,78 @@ while true; do
     esac
 done
 
+# 6. Infrastructure values (all optional)
+echo ""
+printf "${BOLD}Infrastructure configuration${NC} (leave empty to skip any)\n"
+echo ""
+
+# Portal domain (common)
+printf "  ${BOLD}Portal domain${NC} — used as the Flutter portal backend host in CI builds\n"
+printf "    e.g. api.example.com: "
+read -r PORTAL_DOMAIN
+
+# GCP-specific
+GCP_REGION=""
+GCP_VPC_HOST_PROJECT=""
+SUPPORT_EMAIL=""
+ADMIN_EMAIL=""
+if [[ "$CLOUD_PROVIDER" == "gcp" || "$CLOUD_PROVIDER" == "both" ]]; then
+    echo ""
+    printf "  ${YELLOW}GCP settings:${NC}\n"
+    printf "    ${BOLD}GCP region${NC} — region for Cloud Run, Artifact Registry, and networking\n"
+    printf "      [europe-west2]: "
+    read -r GCP_REGION
+    printf "    ${BOLD}VPC host project${NC} — shared VPC host project for network peering\n"
+    printf "      e.g. my-org-networking: "
+    read -r GCP_VPC_HOST_PROJECT
+    printf "    ${BOLD}Support email${NC} — shown on the IAP OAuth consent screen\n"
+    printf "      e.g. support@example.com: "
+    read -r SUPPORT_EMAIL
+    printf "    ${BOLD}Admin email${NC} — granted IAP access to the internal portal\n"
+    printf "      e.g. admin@example.com: "
+    read -r ADMIN_EMAIL
+fi
+
+# AWS-specific
+AWS_REGION=""
+AWS_ACCOUNT_ID=""
+VPC_ID=""
+PUBLIC_SUBNET_1=""
+PUBLIC_SUBNET_2=""
+PRIVATE_SUBNET_1=""
+PRIVATE_SUBNET_2=""
+ACM_CERTIFICATE_ARN=""
+GOOGLE_OAUTH_CLIENT_ID=""
+if [[ "$CLOUD_PROVIDER" == "aws" || "$CLOUD_PROVIDER" == "both" ]]; then
+    echo ""
+    printf "  ${YELLOW}AWS settings:${NC}\n"
+    printf "    ${BOLD}AWS region${NC} — region for ECS, ECR, and ALB resources\n"
+    printf "      [eu-west-1]: "
+    read -r AWS_REGION
+    printf "    ${BOLD}AWS account ID${NC} — account that hosts the ECR registry\n"
+    printf "      e.g. 123456789012: "
+    read -r AWS_ACCOUNT_ID
+    printf "    ${BOLD}VPC ID${NC} — VPC where the ECS service and ALB are deployed\n"
+    printf "      e.g. vpc-0abc1234: "
+    read -r VPC_ID
+    printf "    ${BOLD}Public subnets${NC} — two subnets for the internet-facing ALB (different AZs)\n"
+    printf "      Subnet 1, e.g. subnet-0aaa1111: "
+    read -r PUBLIC_SUBNET_1
+    printf "      Subnet 2, e.g. subnet-0bbb2222: "
+    read -r PUBLIC_SUBNET_2
+    printf "    ${BOLD}Private subnets${NC} — two subnets for ECS tasks (different AZs)\n"
+    printf "      Subnet 1, e.g. subnet-0ccc3333: "
+    read -r PRIVATE_SUBNET_1
+    printf "      Subnet 2, e.g. subnet-0ddd4444: "
+    read -r PRIVATE_SUBNET_2
+    printf "    ${BOLD}ACM certificate ARN${NC} — TLS certificate for the ALB HTTPS listener\n"
+    printf "      e.g. arn:aws:acm:eu-west-1:123456789012:certificate/abc-123: "
+    read -r ACM_CERTIFICATE_ARN
+    printf "    ${BOLD}Google OAuth client ID${NC} — used for Google-based OIDC auth on the portal\n"
+    printf "      e.g. 123456.apps.googleusercontent.com: "
+    read -r GOOGLE_OAUTH_CLIENT_ID
+fi
+
 # ─── Confirmation ────────────────────────────────────────────────────────────
 
 echo ""
@@ -108,6 +180,22 @@ echo "  Service name:   $SERVICE_NAME"
 echo "  Project prefix: $PROJECT_PREFIX"
 echo "  Gist ID:        ${GIST_ID:-<skip>}"
 echo "  Cloud provider: $CLOUD_PROVIDER"
+echo "  Portal domain:  ${PORTAL_DOMAIN:-<skip>}"
+if [[ "$CLOUD_PROVIDER" == "gcp" || "$CLOUD_PROVIDER" == "both" ]]; then
+    echo "  GCP region:     ${GCP_REGION:-<skip (europe-west2)>}"
+    echo "  VPC host proj:  ${GCP_VPC_HOST_PROJECT:-<skip>}"
+    echo "  Support email:  ${SUPPORT_EMAIL:-<skip>}"
+    echo "  Admin email:    ${ADMIN_EMAIL:-<skip>}"
+fi
+if [[ "$CLOUD_PROVIDER" == "aws" || "$CLOUD_PROVIDER" == "both" ]]; then
+    echo "  AWS region:     ${AWS_REGION:-<skip (eu-west-1)>}"
+    echo "  AWS account ID: ${AWS_ACCOUNT_ID:-<skip>}"
+    echo "  VPC ID:         ${VPC_ID:-<skip>}"
+    echo "  Public subs:    ${PUBLIC_SUBNET_1:-<skip>}, ${PUBLIC_SUBNET_2:-<skip>}"
+    echo "  Private subs:   ${PRIVATE_SUBNET_1:-<skip>}, ${PRIVATE_SUBNET_2:-<skip>}"
+    echo "  ACM cert ARN:   ${ACM_CERTIFICATE_ARN:-<skip>}"
+    echo "  OAuth client:   ${GOOGLE_OAUTH_CLIENT_ID:-<skip>}"
+fi
 echo "─────────────────────────────────────"
 printf "Proceed? [y/N] "
 read -r confirm
@@ -211,6 +299,131 @@ if [[ -n "$GIST_ID" ]]; then
     ok "Gist ID updated."
 fi
 
+# ─── Infrastructure replacements ───────────────────────────────────────────
+
+INFRA_SKIPPED=0
+
+# Portal domain
+if [[ -n "$PORTAL_DOMAIN" ]]; then
+    info "Replacing portal domain..."
+    find ./.github/workflows -name '*.yml' | while IFS= read -r f; do
+        sedi "s|TODO_YOUR_DOMAIN|${PORTAL_DOMAIN}|g" "$f"
+    done
+    ok "Portal domain updated."
+else
+    INFRA_SKIPPED=1
+fi
+
+# GCP infrastructure values
+if [[ "$CLOUD_PROVIDER" == "gcp" || "$CLOUD_PROVIDER" == "both" ]]; then
+    if [[ -n "$GCP_REGION" ]]; then
+        info "Replacing GCP region..."
+        for f in terraform/dev/locals.tf terraform/repo/locals.tf; do
+            [[ -f "$f" ]] && sedi "s|europe-west2|${GCP_REGION}|g" "$f"
+        done
+        # Workflow files: registry URL and deploy references
+        find ./.github/workflows -name '*.yml' | while IFS= read -r f; do
+            sedi "s|europe-west2|${GCP_REGION}|g" "$f"
+        done
+        ok "GCP region updated."
+    else
+        INFRA_SKIPPED=1
+    fi
+
+    if [[ -n "$GCP_VPC_HOST_PROJECT" ]]; then
+        info "Replacing VPC host project..."
+        sedi "s|TODO_VPC_HOST_PROJECT|${GCP_VPC_HOST_PROJECT}|g" terraform/dev/locals.tf
+        ok "VPC host project updated."
+    else
+        INFRA_SKIPPED=1
+    fi
+
+    if [[ -n "$SUPPORT_EMAIL" ]]; then
+        info "Replacing support email..."
+        find ./terraform -name 'iap.tf' | while IFS= read -r f; do
+            sedi "s|TODO_SUPPORT_EMAIL|${SUPPORT_EMAIL}|g" "$f"
+        done
+        ok "Support email updated."
+    else
+        INFRA_SKIPPED=1
+    fi
+
+    if [[ -n "$ADMIN_EMAIL" ]]; then
+        info "Replacing admin email..."
+        find ./terraform -name 'iap.tf' | while IFS= read -r f; do
+            sedi "s|TODO_ADMIN_EMAIL|${ADMIN_EMAIL}|g" "$f"
+        done
+        ok "Admin email updated."
+    else
+        INFRA_SKIPPED=1
+    fi
+fi
+
+# AWS infrastructure values
+if [[ "$CLOUD_PROVIDER" == "aws" || "$CLOUD_PROVIDER" == "both" ]]; then
+    if [[ -n "$AWS_REGION" ]]; then
+        info "Replacing AWS region..."
+        for f in terraform/aws-dev/locals.tf terraform/aws-dev/backends.tf terraform/aws-repo/backends.tf terraform/aws-repo/locals.tf; do
+            [[ -f "$f" ]] && sedi "s|eu-west-1|${AWS_REGION}|g" "$f"
+        done
+        ok "AWS region updated."
+    else
+        INFRA_SKIPPED=1
+    fi
+
+    if [[ -n "$AWS_ACCOUNT_ID" ]]; then
+        info "Replacing AWS account ID..."
+        sedi "s|TODO_AWS_ACCOUNT_ID|${AWS_ACCOUNT_ID}|g" terraform/aws-dev/locals.tf
+        ok "AWS account ID updated."
+    else
+        INFRA_SKIPPED=1
+    fi
+
+    if [[ -n "$VPC_ID" ]]; then
+        info "Replacing VPC ID..."
+        sedi "s|TODO_VPC_ID|${VPC_ID}|g" terraform/aws-dev/locals.tf
+        ok "VPC ID updated."
+    else
+        INFRA_SKIPPED=1
+    fi
+
+    if [[ -n "$PUBLIC_SUBNET_1" ]]; then
+        sedi "s|TODO_PUBLIC_SUBNET_1|${PUBLIC_SUBNET_1}|g" terraform/aws-dev/locals.tf
+    else
+        INFRA_SKIPPED=1
+    fi
+    if [[ -n "$PUBLIC_SUBNET_2" ]]; then
+        sedi "s|TODO_PUBLIC_SUBNET_2|${PUBLIC_SUBNET_2}|g" terraform/aws-dev/locals.tf
+    else
+        INFRA_SKIPPED=1
+    fi
+    if [[ -n "$PRIVATE_SUBNET_1" ]]; then
+        sedi "s|TODO_PRIVATE_SUBNET_1|${PRIVATE_SUBNET_1}|g" terraform/aws-dev/locals.tf
+    else
+        INFRA_SKIPPED=1
+    fi
+    if [[ -n "$PRIVATE_SUBNET_2" ]]; then
+        sedi "s|TODO_PRIVATE_SUBNET_2|${PRIVATE_SUBNET_2}|g" terraform/aws-dev/locals.tf
+    else
+        INFRA_SKIPPED=1
+    fi
+
+    if [[ -n "$ACM_CERTIFICATE_ARN" ]]; then
+        sedi "s|TODO_ACM_CERTIFICATE_ARN|${ACM_CERTIFICATE_ARN}|g" terraform/aws-dev/locals.tf
+    else
+        INFRA_SKIPPED=1
+    fi
+
+    if [[ -n "$GOOGLE_OAUTH_CLIENT_ID" ]]; then
+        sedi "s|TODO_GOOGLE_OAUTH_CLIENT_ID|${GOOGLE_OAUTH_CLIENT_ID}|g" terraform/aws-dev/main.tf
+    else
+        INFRA_SKIPPED=1
+    fi
+
+    # Print a single status for all AWS replacements
+    ok "AWS infrastructure values updated."
+fi
+
 # ─── Cloud provider cleanup ─────────────────────────────────────────────────
 
 if [[ "$CLOUD_PROVIDER" == "gcp" ]]; then
@@ -280,6 +493,10 @@ echo ""
 echo "Next steps:"
 echo "  1. Run 'go mod tidy' to update dependencies"
 echo "  2. Review the changes and commit: git add -A && git commit -m 'Initialize project from template'"
-echo "  3. Fill in TODO placeholders in terraform/ files"
-echo "  4. Configure GitHub repository secrets and variables (see README)"
+if [[ "$INFRA_SKIPPED" -eq 1 ]]; then
+    echo "  3. Fill in remaining TODO placeholders: grep -r 'TODO_' terraform/ .github/"
+    echo "  4. Configure GitHub repository secrets and variables (see README)"
+else
+    echo "  3. Configure GitHub repository secrets and variables (see README)"
+fi
 echo ""
