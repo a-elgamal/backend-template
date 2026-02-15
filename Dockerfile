@@ -10,15 +10,14 @@ COPY . .
 
 RUN make build
 
-FROM fischerscode/flutter:3.41.0 as flutter_builder
-USER flutter:flutter
-WORKDIR /home/flutter/portal
+FROM ghcr.io/cirruslabs/flutter:3.41.0 as flutter_builder
+WORKDIR /app/portal
 ARG portal_backend_scheme=http
 ARG portal_backend_host=localhost
 ARG portal_backend_port=8080
 ARG portal_backend_path=/internal
 
-COPY --chown=flutter:flutter portal .
+COPY portal .
 
 RUN flutter pub get
 RUN flutter build web --release --base-href=$portal_backend_path/portal/ --dart-define=portal_backend_scheme=$portal_backend_scheme --dart-define=portal_backend_host=$portal_backend_host --dart-define=portal_backend_port=$portal_backend_port --dart-define=portal_backend_path=$portal_backend_path
@@ -32,7 +31,7 @@ RUN set -x && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -
     rm -rf /var/lib/apt/lists/*
 
 # Copy Portal
-COPY --from=flutter_builder /home/flutter/portal/build/web /var/www
+COPY --from=flutter_builder /app/portal/build/web /var/www
 
 # Copy the binary to the production image from the builder stage.
 COPY --from=go_builder /usr/src/myservice/bin/myservice /usr/local/bin/myservice
