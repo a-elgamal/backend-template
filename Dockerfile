@@ -1,4 +1,4 @@
-FROM golang:bookworm as go_builder
+FROM golang:1.26-bookworm as go_builder
 
 WORKDIR /usr/src/myservice
 
@@ -10,7 +10,7 @@ COPY . .
 
 RUN make build
 
-FROM fischerscode/flutter as flutter_builder
+FROM fischerscode/flutter:3.41.0 as flutter_builder
 USER flutter:flutter
 WORKDIR /home/flutter/portal
 ARG portal_backend_scheme=http

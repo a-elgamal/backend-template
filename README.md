@@ -3,9 +3,9 @@
 A backend service template with a Flutter admin portal.
 
 ## Prerequisites
-- Go 1.22+
-- PostgreSQL 15
-- Flutter SDK (for portal development)
+- Go 1.26+
+- PostgreSQL 18
+- Flutter 3.41+ (for portal development)
 - Docker & Docker Compose (optional)
 
 ## Running all checks

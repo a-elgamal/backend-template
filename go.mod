@@ -1,6 +1,6 @@
 module alielgamal.com/myservice
 
-go 1.22.2
+go 1.26.0
 
 require (
 	contrib.go.opencensus.io/integrations/ocsql v0.1.7
