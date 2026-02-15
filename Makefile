@@ -37,9 +37,6 @@ $(BIN)/goimports: PACKAGE=golang.org/x/tools/cmd/goimports@latest
 REVIVE = $(BIN)/revive
 $(BIN)/revive: PACKAGE=github.com/mgechev/revive@latest
 
-GOCOV = $(BIN)/gocov
-$(BIN)/gocov: PACKAGE=github.com/axw/gocov/gocov@latest
-
 GOTESTSUM = $(BIN)/gotestsum
 $(BIN)/gotestsum: PACKAGE=gotest.tools/gotestsum@latest
 
@@ -48,7 +45,7 @@ COVERAGE_MODE = count
 COVERAGE_MIN = 70
 .PHONY: test
 test:
-test: | $(GOCOV) $(GOTESTSUM) ; $(info $(M) running coverage tests…) @ ## Run coverage tests locally
+test: | $(GOTESTSUM) ; $(info $(M) running coverage tests…) @ ## Run coverage tests locally
 	$Q mkdir -p bin/test
 	$Q $(GOTESTSUM) -- \
 		-coverpkg=$(shell echo $(PKGS) | tr ' ' ',') \
@@ -61,7 +58,7 @@ test: | $(GOCOV) $(GOTESTSUM) ; $(info $(M) running coverage tests…) @ ## Run 
 
 .PHONY: test-ci
 test-ci:
-test-ci: | $(GOCOV) $(GOTESTSUM) ; $(info $(M) running coverage tests…) @ ## Run coverage tests in CI
+test-ci: | $(GOTESTSUM) ; $(info $(M) running coverage tests…) @ ## Run coverage tests in CI
 	$Q mkdir -p bin/test
 	$Q $(GOTESTSUM) --junitfile bin/test/unit-tests.xml --format github-actions -- \
 		-coverpkg=$(shell echo $(PKGS) | tr ' ' ',') \
