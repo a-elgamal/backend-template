@@ -20,3 +20,6 @@ GCP:
   PROJECT_NUMBER:
   REGION:
   INTERNAL_BACKEND_SERVICE_ID:  # Not Set disable IAP Signed Headers verification for internal routes
+
+AWS:
+  ALB_REGION:  # Not Set disables ALB OIDC authentication for internal routes

@@ -14,6 +14,8 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 
 	"alielgamal.com/myservice/internal/app"
+	"alielgamal.com/myservice/internal/auth"
+	"alielgamal.com/myservice/internal/aws"
 	"alielgamal.com/myservice/internal/config"
 	internalDB "alielgamal.com/myservice/internal/db"
 	"alielgamal.com/myservice/internal/google"
@@ -58,8 +60,14 @@ func startCmd(logger logr.Logger, db *internalDB.SQLDB, appConfig config.Config)
 			health.SetupRoutes(router, db, dbVersion)
 
 			internalRouter := router.Group("/internal")
-			if appConfig.GCPConfig.IAPAuthEnabled() {
-				internalRouter.Use(google.AuthMiddleware(logger, appConfig.GCPConfig))
+			var authProvider auth.Provider
+			if appConfig.AWSConfig.ALBAuthEnabled() {
+				authProvider = aws.NewAuthProvider(appConfig.AWSConfig)
+			} else if appConfig.GCPConfig.IAPAuthEnabled() {
+				authProvider = google.NewAuthProvider(appConfig.GCPConfig)
+			}
+			if authProvider != nil {
+				internalRouter.Use(authProvider.Middleware(logger))
 			}
 			health.SetupRoutes(internalRouter, db, dbVersion)
 			app.SetupRoutes(internalRouter, logger, db)
@@ -85,8 +93,7 @@ func startCmd(logger logr.Logger, db *internalDB.SQLDB, appConfig config.Config)
 			<-cmd.Context().Done()
 			logger.Info("Shutting down...")
 
-			// Google Cloud Run only allows 10 seconds for the service to shutdown
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(appConfig.ServerConfig.ShutdownTimeoutSeconds())*time.Second)
 			defer cancel()
 			server.Shutdown(ctx)
 			telemetryShutdownFunc(ctx)

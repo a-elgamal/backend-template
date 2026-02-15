@@ -5,6 +5,7 @@ import "github.com/spf13/viper"
 const serverConfigHTTPAddress = "SERVER.HTTP_ADDRESS"
 const serverCORSAllowedOrigins = "SERVER.CORS_ALLOWED_ORIGINS"
 const serverPortalPath = "SERVER.PORTAL_PATH"
+const serverShutdownTimeoutSeconds = "SERVER.SHUTDOWN_TIMEOUT_SECONDS"
 
 // ServerConfig contains all the configurations related to the server
 type ServerConfig struct {
@@ -24,4 +25,13 @@ func (sc ServerConfig) CORSAllowedOrigins() []string {
 // PortalPath The path from which portal files should be served
 func (sc ServerConfig) PortalPath() string {
 	return sc.v.GetString(serverPortalPath)
+}
+
+// ShutdownTimeoutSeconds returns the graceful shutdown timeout in seconds (default 10)
+func (sc ServerConfig) ShutdownTimeoutSeconds() int {
+	timeout := sc.v.GetInt(serverShutdownTimeoutSeconds)
+	if timeout <= 0 {
+		return 10
+	}
+	return timeout
 }

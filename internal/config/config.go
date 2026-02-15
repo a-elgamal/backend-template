@@ -38,6 +38,7 @@ type Config struct {
 	DBConfig        DBConfig
 	TelemetryConfig TelemetryConfig
 	GCPConfig       GCPConfig
+	AWSConfig       AWSConfig
 }
 
 // NewConfigFromViper Creates a new Config struct from a Viper object
@@ -47,5 +48,6 @@ func NewConfigFromViper(v *viper.Viper) Config {
 		DBConfig:        DBConfig{v},
 		TelemetryConfig: TelemetryConfig{v},
 		GCPConfig:       GCPConfig{v},
+		AWSConfig:       AWSConfig{v},
 	}
 }
