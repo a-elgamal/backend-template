@@ -1,0 +1,10 @@
+.gitignore
+AUTHORS.md
+CONTRIBUTING.md
+LICENSE
+NOTICE
+README.md
+bin/
+.github/
+terraform/
+.vscode/

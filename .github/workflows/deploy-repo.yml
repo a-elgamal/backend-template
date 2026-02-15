@@ -1,0 +1,15 @@
+name: Deploy Repo Environment
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - terraform/repo/**
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy.yml
+    with:
+      env: repo

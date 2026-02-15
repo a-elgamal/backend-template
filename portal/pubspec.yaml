@@ -1,0 +1,38 @@
+name: portal
+description: "Admin Portal"
+
+# Prevent accidental publishing to pub.dev.
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.4 <4.0.0'
+
+dependencies:
+  fetch_client: ^1.1.0
+  flutter:
+    sdk: flutter
+  go_router: ^14.0.2
+  http: ^1.2.1
+  provider: ^6.1.2
+  uuid: ^4.4.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  go_router_builder: any
+  build_runner: any
+  build_verify: any
+
+  flutter_lints: ^3.0.2
+  mockito: ^5.4.4
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    # Add assets from the images directory to the application.
+    - assets/images/

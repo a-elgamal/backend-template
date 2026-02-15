@@ -1,0 +1,22 @@
+SERVER:
+  # Empty port would automatically assign an available port
+  HTTP_ADDRESS: ":8080"
+  CORS_ALLOWED_ORIGINS: ["http://localhost:8000"]
+  PORTAL_PATH: "portal/build/web"
+
+DB:
+  URL_TEMPLATE: postgres://postgres:postgres@localhost/%v?sslmode=disable
+  NAME: myservice
+
+TELEMETRY:
+  TRACING:
+    SAMPLING: 1
+  LOGGING:
+    LEVEL: "debug"
+    SYSLOG_TCP_ADDRESS: "" # EMPTY or NULL will disable sending syslog over TCP
+    CONSOLE_LOGGING_ENABLED: TRUE
+
+GCP:
+  PROJECT_NUMBER:
+  REGION:
+  INTERNAL_BACKEND_SERVICE_ID:  # Not Set disable IAP Signed Headers verification for internal routes

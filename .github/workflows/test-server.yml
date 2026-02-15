@@ -1,0 +1,123 @@
+name: Test Server
+
+on: 
+  push:
+    paths:
+      - .github/workflows/test-server.yml
+      - '**.go'
+
+env:
+  coverage_percentage: 0%
+  test_badge_color: yellow
+  test_badge_message: none executed
+
+jobs:
+  static-analysis:
+    runs-on: ubuntu-latest
+
+    if: ${{ !startsWith( github.ref, 'refs/tags/' ) }}
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Lint
+        uses: docker://morphy/revive-action:v2
+
+  test:
+    runs-on: ubuntu-latest
+
+    if: ${{ !startsWith( github.ref, 'refs/tags/' ) }}
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: myservice
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal access token.
+          fetch-depth: 0 # otherwise, there would be errors pushing refs to the destination repository.
+
+      - name: Setup Golang
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Build
+        run: |
+          make build
+
+      - name: Test
+        run: |
+          DB_URL=postgres://postgres:postgres@postgres/myservice?sslmode=disable
+          make test-ci
+
+      - name: Test Report
+        id: compute_test_results
+        uses: dorny/test-reporter@v1
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: Server Test Report
+          path: bin/test/unit-tests.xml
+          reporter: java-junit
+          max-annotations: '50'
+          fail-on-error: 'false'
+          fail-on-empty: 'true'
+
+      - name: All tests pass?
+        if: steps.compute_test_results.outputs.failed == 0
+        run: |
+          echo "test_badge_color=brightgreen" >> $GITHUB_ENV
+          echo "test_badge_message=${{steps.compute_test_results.outputs.passed}} passed" >> $GITHUB_ENV
+
+      - name: Some tests failed?
+        if: steps.compute_test_results.outputs.failed > 0
+        run: | 
+          echo "test_badge_color=red" >> $GITHUB_ENV
+          echo "test_badge_message=${{steps.compute_test_results.outputs.failed}} failed ${{steps.compute_test_results.outputs.passed}} passed" >> $GITHUB_ENV
+
+      - name: Create tests badge
+        if: github.event_name == 'push' && github.event.ref == 'refs/heads/main'
+        uses: schneegans/dynamic-badges-action@v1.6.0
+        with:
+          auth: ${{ secrets.GIST_TOKEN }}
+          gistID: 9db84bf86640df151185b96b762b6c1e
+          filename: "myservice-server-tests.json"
+          label: 'Server Tests'
+          message: '${{ env.test_badge_message }}'
+          namedLogo: "go"
+          color: ${{ env.test_badge_color }}
+          forceUpdate: true
+
+      - name: Calculate Test Coverage
+        run: |
+          percentage=$(cat bin/test/coverage.out | gawk '/total:.*statements/ {print $3;}')
+          echo "Coverage percentage: $percentage"
+          echo "coverage_percentage=$percentage" >> $GITHUB_ENV
+          
+      - name: Create test coverage badge
+        if: github.event_name == 'push' && github.event.ref == 'refs/heads/main'
+        uses: schneegans/dynamic-badges-action@v1.6.0
+        with:
+          auth: ${{ secrets.GIST_TOKEN }}
+          gistID: 9db84bf86640df151185b96b762b6c1e
+          filename: "myservice-server-coverage.json"
+          label: 'Server Coverage'
+          message: '${{ env.coverage_percentage }}'
+          namedLogo: "go"
+          valColorRange: ${{ env.coverage_percentage }}
+          minColorRange: 70
+          maxColorRange: 90
+          forceUpdate: true

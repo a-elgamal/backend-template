@@ -1,0 +1,80 @@
+name: Publish
+run-name: Publishing Docker Image to GCP Artifact Repository (London)
+
+on: 
+  push:
+    paths-ignore:
+      - 'terraform/**'
+      - '.github/**'
+      - '!.github/workflows/publish.yml'
+      - '.gitignore'
+      - 'README.md'
+      - '.vscode/**'
+      - '*_test.go'
+
+
+env:
+  REGISTRY: europe-west2-docker.pkg.dev
+  IMAGE_NAME: knz-myservice-repo/knz-myservice/myservice
+
+jobs:
+
+  publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: 'write'
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+          
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - id: auth
+        name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SA }}
+          token_format: 'access_token'
+
+      - name: Log in to the Artifact Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+      
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref_name ==  github.event.repository.default_branch }}
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+      
+      - name: "[DEV] Build and push Docker image"
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          build-args: |
+            portal_backend_scheme=https
+            portal_backend_host=TODO_YOUR_DOMAIN
+            portal_backend_port=443
+            portal_backend_path=/myservice/internal
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

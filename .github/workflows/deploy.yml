@@ -1,0 +1,133 @@
+name: Deploy
+
+on:
+  workflow_call:
+    inputs:
+      env:
+        type: string
+        description: The name of the environment to deploy
+        required: true
+      image_tag:
+        type: string
+        description: The image tag to deploy
+        required: false
+
+concurrency: deploy-${{inputs.env}}
+
+jobs:
+  plan:
+    permissions:
+      id-token: 'write'
+      contents: read
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            terraform
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+          terraform_version: ${{ vars.TERRAFORM_VERSION }}
+
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SA }}
+
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+        with:
+            install_components: 'alpha'
+      
+      - name: 'Fetch Image Digest'
+        id: fetch-digest
+        if: ${{inputs.image_tag != null}}
+        run: |
+          echo 'digest<<EOF' >> $GITHUB_OUTPUT
+          SHA=$(gcloud artifacts docker images describe europe-west2.docker.pkg.dev/knz-myservice-repo/knz-myservice/myservice:${{inputs.image_tag}} --format='get(image_summary.digest)')
+          echo '-var="docker_image_digest='"$SHA"'"' >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
+
+      - name: Terraform Init
+        id: init
+        working-directory: terraform/${{ inputs.env }}
+        shell: bash
+        run: |
+          terraform init
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: terraform/${{ inputs.env }}
+        shell: bash
+        run: |
+          terraform plan ${{ steps.fetch-digest.outputs.digest }} -out=tfplan
+
+      - name: Upload Plan
+        id: upload-plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: terraform/${{ inputs.env }}/tfplan
+
+
+  apply:
+    needs: plan
+    environment: ${{ inputs.env }}
+    permissions:
+      id-token: 'write'
+      contents: read
+    
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            terraform
+
+      - name: Download Plan
+        id: download-plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+          path: terraform/${{ inputs.env }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+          terraform_version: ${{ vars.TERRAFORM_VERSION }}
+
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SA }}
+
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+        with:
+          install_components: 'alpha'
+
+      - name: Terraform Init
+        id: init
+        working-directory: terraform/${{ inputs.env }}
+        shell: bash
+        run: |
+          terraform init
+
+      - name: Terraform Apply
+        id: apply
+        working-directory: terraform/${{ inputs.env }}
+        shell: bash
+        run: |
+          terraform apply -input=false tfplan
