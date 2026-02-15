@@ -2,7 +2,7 @@ resource "google_sql_database_instance" "default" {
   name             = "myservice"
   project          = var.project
   region           = var.region
-  database_version = "POSTGRES_15"
+  database_version = "POSTGRES_18"
   settings {
     tier              = var.cloudsql_instance_type
     availability_type = var.cloudsql_ha_enabled ? "REGIONAL" : "ZONAL"

@@ -218,7 +218,7 @@ The same Docker image is used for both cloud providers.
 Infrastructure is defined in `terraform/modules/myservice/`:
 
 - **Compute**: Cloud Run with an OTLP collector sidecar
-- **Database**: Cloud SQL PostgreSQL 15
+- **Database**: Cloud SQL PostgreSQL 18
 - **Auth**: IAP on the internal backend service
 - **Registry**: Artifact Registry (configured in `terraform/repo/`)
 - **Telemetry**: Exported to Google Cloud via the `googlecloud` OTLP exporter
@@ -233,7 +233,7 @@ CI/CD (manual trigger by default — see [Enable CI/CD workflows](#4-enable-cicd
 Infrastructure is defined in `terraform/modules/myservice-aws/`:
 
 - **Compute**: ECS Fargate with an OTLP collector sidecar
-- **Database**: RDS PostgreSQL 15
+- **Database**: RDS PostgreSQL 18
 - **Auth**: ALB with OIDC authenticate action (Google as identity provider)
 - **Registry**: ECR (configured in `terraform/aws-repo/`)
 - **Telemetry**: Exported to CloudWatch/X-Ray via `awsemf`/`awsxray` OTLP exporters

@@ -15,7 +15,7 @@ resource "random_password" "db_password" {
 resource "aws_db_instance" "default" {
   identifier     = "myservice-${var.env}"
   engine         = "postgres"
-  engine_version = "15"
+  engine_version = "18"
   instance_class = var.rds_instance_class
   multi_az       = var.rds_multi_az
 
