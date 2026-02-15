@@ -10,6 +10,7 @@ on:
 env:
   test_badge_color: red
   test_badge_message: Failed
+  GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
 
 jobs:
   test:
@@ -70,10 +71,10 @@ jobs:
           echo "test_badge_message=Passed" >> $GITHUB_ENV
 
       - name: Create tests badge
-        if: ${{ (success() || failure()) && secrets.GIST_TOKEN != '' }}
+        if: (success() || failure()) && env.GIST_TOKEN != ''
         uses: schneegans/dynamic-badges-action@v1.6.0
         with:
-          auth: ${{ secrets.GIST_TOKEN }}
+          auth: ${{ env.GIST_TOKEN }}
           gistID: 9db84bf86640df151185b96b762b6c1e
           filename: "myservice-integration-tests.json"
           label: 'Integration Tests'
