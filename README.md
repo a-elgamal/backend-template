@@ -34,32 +34,15 @@ docker-compose -f docker-compose.local.yml up
 
 ## Using This Template
 
-### 1. Rename the module
-
-Replace the Go module path throughout the project:
+Run the interactive setup wizard to customize this template for your project:
 
 ```shell
-# Update go.mod
-sed -i '' 's|alielgamal.com/myservice|yourorg.com/yourservice|g' go.mod
-
-# Update all Go import paths
-find . -name '*.go' -exec sed -i '' 's|alielgamal.com/myservice|yourorg.com/yourservice|g' {} +
+make setup
 ```
 
-### 2. Rename the service
+The wizard will walk you through renaming the module, service, and configuring Terraform and CI/CD settings.
 
-Search and replace `myservice` with your service name in:
-
-- `Makefile` (binary name in `run` target)
-- `Dockerfile` (binary paths)
-- `docker-compose.local.yml` (service name, database name)
-- `application.yaml` (database name in `DB.URL_TEMPLATE`)
-- `main.go` and `cmd/` (CLI command names)
-- `internal/` (database table names, tracer names)
-- `terraform/` (resource names, project references)
-- `.github/workflows/` (image names, service references)
-
-### 3. Replace the sample entity
+### Adding Domain Entities
 
 The template includes a sample `app` entity in `internal/app/` demonstrating CRUD operations built on `stored.Store[T]`. To add your own domain entities:
 
@@ -69,19 +52,15 @@ The template includes a sample `app` entity in `internal/app/` demonstrating CRU
 4. Register routes in `cmd/start.go` (similar to how `app.SetupRoutes` is called)
 5. Add a database migration in `internal/db/migrations/`
 
-### 4. Enable CI/CD workflows
+### Enabling CI/CD Workflows
 
-The template ships with CI/CD workflows that are safe to run out of the box. Test workflows (`test-server.yml`, `test-portal.yml`, `test-integration.yml`) run on every push — badge updates are skipped unless the `GIST_TOKEN` secret is configured.
+Test workflows (`test-server.yml`, `test-portal.yml`, `test-integration.yml`) run on every push out of the box — badge updates are skipped unless the `GIST_TOKEN` secret is configured.
 
 Publish and deploy workflows are set to `workflow_dispatch` only (manual trigger) so they don't fail without cloud credentials. To enable them:
 
 1. **Publish workflows** (`publish.yml`, `publish-aws.yml`): Uncomment the `push` trigger and `paths-ignore` block
 2. **Deploy workflows** (`deploy-dev.yml`, `deploy-repo.yml`, `deploy-aws-dev.yml`): Uncomment the `push` and/or `workflow_run` triggers
 3. Configure the required repository variables and secrets (see [GitHub Actions Setup](#github-actions-setup))
-
-### 5. Configure deployment
-
-Search for `TODO` comments across the Terraform and workflow files for values that need customization (project IDs, domains, VPC references, etc.).
 
 ## Project Structure
 
