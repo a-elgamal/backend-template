@@ -442,6 +442,34 @@ else
     ok "Keeping both cloud providers."
 fi
 
+# ─── Enable CI/CD triggers ──────────────────────────────────────────────────
+
+# Uncomment push/workflow_run triggers in the remaining workflow files
+uncomment_triggers() {
+    local file="$1"
+    [[ -f "$file" ]] || return
+    # Uncomment lines that start with optional whitespace + "# " under the on: block
+    # Matches lines like "  # push:", "  #   branches:", "  # workflow_run:", etc.
+    sedi 's/^  # \(push:\)/  \1/' "$file"
+    sedi 's/^  #   \(paths-ignore:\)/    \1/' "$file"
+    sedi 's/^  #   \(paths:\)/    \1/' "$file"
+    sedi 's/^  #     \(- .*\)/      \1/' "$file"
+    sedi 's/^  #   \(branches:\)/    \1/' "$file"
+    sedi 's/^  # \(workflow_run:\)/  \1/' "$file"
+    sedi 's/^  #   \(workflows:.*\)/    \1/' "$file"
+    sedi 's/^  #   \(types:.*\)/    \1/' "$file"
+}
+
+info "Enabling CI/CD deployment triggers..."
+for wf in .github/workflows/publish.yml \
+           .github/workflows/publish-aws.yml \
+           .github/workflows/deploy-dev.yml \
+           .github/workflows/deploy-repo.yml \
+           .github/workflows/deploy-aws-dev.yml; do
+    uncomment_triggers "$wf"
+done
+ok "CI/CD triggers enabled."
+
 # ─── README cleanup ─────────────────────────────────────────────────────────
 
 info "Updating README..."

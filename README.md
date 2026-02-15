@@ -52,15 +52,11 @@ The template includes a sample `app` entity in `internal/app/` demonstrating CRU
 4. Register routes in `cmd/start.go` (similar to how `app.SetupRoutes` is called)
 5. Add a database migration in `internal/db/migrations/`
 
-### Enabling CI/CD Workflows
+### CI/CD Workflows
 
 Test workflows (`test-server.yml`, `test-portal.yml`, `test-integration.yml`) run on every push out of the box — badge updates are skipped unless the `GIST_TOKEN` secret is configured.
 
-Publish and deploy workflows are set to `workflow_dispatch` only (manual trigger) so they don't fail without cloud credentials. To enable them:
-
-1. **Publish workflows** (`publish.yml`, `publish-aws.yml`): Uncomment the `push` trigger and `paths-ignore` block
-2. **Deploy workflows** (`deploy-dev.yml`, `deploy-repo.yml`, `deploy-aws-dev.yml`): Uncomment the `push` and/or `workflow_run` triggers
-3. Configure the required repository variables and secrets (see [GitHub Actions Setup](#github-actions-setup))
+Publish and deploy workflows are set to `workflow_dispatch` only (manual trigger) by default. Running `make setup` automatically enables push triggers for the selected cloud provider's workflows. You'll still need to configure the required repository variables and secrets (see [GitHub Actions Setup](#github-actions-setup)).
 
 ## Project Structure
 
