@@ -89,7 +89,7 @@ jobs:
           echo "test_badge_message=${{steps.compute_test_results.outputs.failed}} failed ${{steps.compute_test_results.outputs.passed}} passed" >> $GITHUB_ENV
 
       - name: Create tests badge
-        if: github.event_name == 'push' && github.event.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.event.ref == 'refs/heads/main' && secrets.GIST_TOKEN != ''
         uses: schneegans/dynamic-badges-action@v1.6.0
         with:
           auth: ${{ secrets.GIST_TOKEN }}
@@ -108,7 +108,7 @@ jobs:
           echo "coverage_percentage=$percentage" >> $GITHUB_ENV
           
       - name: Create test coverage badge
-        if: github.event_name == 'push' && github.event.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.event.ref == 'refs/heads/main' && secrets.GIST_TOKEN != ''
         uses: schneegans/dynamic-badges-action@v1.6.0
         with:
           auth: ${{ secrets.GIST_TOKEN }}

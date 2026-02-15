@@ -70,7 +70,7 @@ jobs:
           echo "test_badge_message=Passed" >> $GITHUB_ENV
 
       - name: Create tests badge
-        if: success() || failure()
+        if: (success() || failure()) && secrets.GIST_TOKEN != ''
         uses: schneegans/dynamic-badges-action@v1.6.0
         with:
           auth: ${{ secrets.GIST_TOKEN }}
